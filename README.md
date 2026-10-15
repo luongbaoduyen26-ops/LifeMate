@@ -1,32 +1,49 @@
 # LifeMate 🌿
 
-Website tiếng Việt giúp ghi nhận đời sống, theo dõi thói quen và xem lại tiến độ cá nhân. HTML, CSS và JavaScript thuần; không cần build hay cài dependencies.
+Website tiếng Việt để ghi nhận đời sống, theo dõi thói quen và xem báo cáo tuần. HTML/CSS/JavaScript thuần, không cần build. Supabase cung cấp email/password login và database riêng theo từng tài khoản.
 
-## Chạy
+## Bắt đầu
 
-Mở `index.html` trong trình duyệt, hoặc chạy từ thư mục dự án:
+Xem **[Hướng dẫn kết nối Supabase từng bước](SUPABASE_SETUP.md)**. Tạo project, chạy `supabase/schema.sql`, cấu hình URL xác nhận email và điền Project URL + Publishable key công khai vào `config.js`. Không bao giờ đưa service_role/Secret key hoặc mật khẩu database lên frontend.
+
+Chạy từ thư mục dự án:
 
 ```sh
 python3 -m http.server 8000 --bind 0.0.0.0
 ```
 
-Sử dụng máy chủ HTTP để có nguồn lưu trữ trình duyệt ổn định. Không cần tài khoản hay cơ sở dữ liệu. Google Fonts là tùy chọn; khi ngoại tuyến, giao diện dùng phông hệ thống.
+Hoặc triển khai các tệp tĩnh trên GitHub Pages. Đăng nhập và xác nhận email cần HTTP/HTTPS cùng Redirect URL đúng; không dùng mở file trực tiếp cho quy trình cloud. Khi chưa cấu hình Supabase, trang hướng dẫn kết nối và chế độ xem thử xuất hiện. Xem thử chỉ giữ dữ liệu trong bộ nhớ, không lưu.
 
-## Chức năng
+## Tính năng
 
-- Tổng quan với điểm cân bằng 0–100, điều chỉnh nước nhanh, checklist thói quen và biểu đồ 7 ngày.
-- Ghi nhận giấc ngủ, chất lượng ngủ, nước, vận động, dinh dưỡng, tâm trạng, năng lượng và nhật ký. Điểm được tính trực tiếp, bấm Lưu để ghi nhận.
-- Tạo, lọc, hoàn thành và xóa thói quen; lịch 7 ngày, chuỗi hiện tại và kỷ lục. Chuỗi hiện tại cho phép hôm nay chưa hoàn thành nếu hôm qua đã hoàn thành.
-- Trợ lý dùng quy tắc ngoại tuyến; phân tích dữ liệu thực tế, không phải mô hình AI trong chế độ này. Kết nối Gemini 2.5 Flash tùy chọn ở Cài đặt, với khóa riêng của người dùng. Lỗi kết nối sẽ chuyển sang gợi ý ngoại tuyến.
-- Báo cáo 7 ngày liên tiếp tính đến hôm nay: radar, thanh tỷ lệ thói quen, huy hiệu, mục tiêu ưu tiên và in/lưu PDF qua hộp thoại trình duyệt.
-- Giao diện sáng/tối, responsive, sao lưu và khôi phục JSON có kiểm tra cấu trúc.
+- Tổng quan, điểm cân bằng, điều chỉnh nước nhanh, checklist và biểu đồ 7 ngày.
+- Ghi nhận ngủ, nước, vận động, dinh dưỡng, tâm trạng, năng lượng và nhật ký.
+- Tạo/lọc/xóa thói quen, lịch hoàn thành, chuỗi hiện tại và kỷ lục.
+- Báo cáo 7 ngày, radar, mức độ đều đặn, huy hiệu, mục tiêu đề xuất và in/PDF.
+- Trợ lý quy tắc ngoại tuyến; tùy chọn Gemini 2.5 Flash với API key cá nhân giữ trong phiên tab.
+- Đăng ký, xác nhận email, đăng nhập, quên mật khẩu và đăng xuất.
+- Lưu cloud theo tài khoản, phát hiện ghi đè giữa thiết bị, thông báo chưa lưu khi lỗi; xuất/nhập JSON và chuyển dữ liệu LocalStorage cũ có xác nhận.
+- Giao diện sáng/tối và responsive. Google Fonts tùy chọn, có phông hệ thống dự phòng.
 
-## Dữ liệu và giới hạn
+## Dữ liệu
 
-Lần đầu mở nạp dữ liệu mẫu 7 ngày, có nhãn trên tổng quan. Cài đặt → Xóa dữ liệu & bắt đầu lại để bỏ mẫu. Dữ liệu nằm ở LocalStorage của trình duyệt/nguồn trang, không đồng bộ giữa thiết bị. Xuất JSON để sao lưu. Chưa có xác thực hay backend.
+Ghi nhận và thói quen lưu trong bảng `public.lifemate_data` trên Supabase; mỗi tài khoản có một JSON document với revision. RLS chỉ cho đọc hàng của mình; ghi qua RPC lấy `auth.uid()` và so khớp revision. Không tự động trộn dữ liệu hay realtime: tải lại từ đám mây trong Cài đặt khi chuyển thiết bị. Nếu xung đột, xuất bản nháp trước khi tải lại.
 
-Khóa Gemini chỉ nằm trong SessionStorage của tab, không bao gồm trong tệp sao lưu. Khi dùng Gemini, lịch sử hội thoại gần nhất và ghi nhận 7 ngày (có nhật ký) được gửi tới `generativelanguage.googleapis.com`. Không dùng khóa máy chủ dùng chung trên website công khai; triển khai nhiều người dùng cần backend bảo vệ khóa, xác thực và hạn mức. Mô hình có thể yêu cầu quyền truy cập/hạn mức tài khoản Google phù hợp.
+Dữ liệu cá nhân mới không ghi vào LocalStorage. Phiên đăng nhập nằm ở SessionStorage của tab; có thể cần đăng nhập lại sau khi đóng tab. LocalStorage còn dùng cho lựa chọn giao diện và đọc dữ liệu phiên bản cũ để di chuyển. Không tự gửi dữ liệu cũ/mẫu lên cloud. Khi lỗi mạng, bản nháp chỉ còn trong bộ nhớ tab cho đến khi lưu lại hoặc xuất JSON. Chủ project Supabase có quyền quản trị dữ liệu; chưa có mã hóa đầu cuối.
 
-Điểm cân bằng là trung bình năm thành phần: ngủ (mục tiêu 8 giờ), nước (2 lít), vận động (30 phút), tâm trạng và dinh dưỡng; mỗi thành phần tối đa 100. Đây là chỉ số tham khảo do ứng dụng tính, không phải thước đo y tế. Tương quan hiển thị chỉ là quan sát, không chứng minh nguyên nhân. Calo là ước tính đơn giản 5 kcal/phút.
+Gemini nhận hội thoại gần đây và số liệu/nhật ký 7 ngày khi người dùng chủ động bật bằng khóa riêng. Khóa không nằm trong JSON sao lưu. Dùng khóa cá nhân có giới hạn; website nhiều người dùng với khóa chung cần backend bảo vệ khóa.
 
-Ứng dụng chỉ hỗ trợ lối sống, không thay thế tư vấn, chẩn đoán hay điều trị y tế. Gemini trực tiếp cần Internet và API key hợp lệ; chế độ ngoại tuyến không cần hai điều này.
+## Điểm và giới hạn
+
+Điểm là trung bình năm thành phần: ngủ/8h, nước/2L, vận động/30 phút, tâm trạng và dinh dưỡng; mỗi thành phần tối đa 100. Chỉ là chỉ số tham khảo, không phải thước đo y tế. Calo ước tính 5 kcal/phút. Quan sát tương quan không chứng minh quan hệ nguyên nhân. Trợ lý không thay thế chẩn đoán/điều trị chuyên môn.
+
+## Kiểm tra
+
+```sh
+node --check app.js
+node --check cloud.js
+node --check account.js
+node --test tests/cloud.test.cjs
+```
+
+Kiểm thử đăng nhập, dữ liệu hai tài khoản và hai thiết bị thật theo mục 5 trong hướng dẫn Supabase sau khi kết nối project. Không coi mock API là xác minh kết nối Supabase thật.
