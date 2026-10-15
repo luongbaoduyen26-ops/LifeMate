@@ -1,0 +1,10 @@
+{
+  "name": "lifemate",
+  "version": "2.0.0",
+  "private": true,
+  "description": "LifeMate self-hosted PostgreSQL application",
+  "engines": { "node": ">=22 <25" },
+  "scripts": { "start": "node server/index.cjs", "test": "node --test tests/backend.test.cjs" },
+  "dependencies": { "express": "5.1.0", "helmet": "8.1.0", "pg": "8.16.3" },
+  "devDependencies": { "@electric-sql/pglite": "0.3.14" }
+}

@@ -1,49 +1,41 @@
-# LifeMate 🌿
+# LifeMate — bản PostgreSQL tự quản lý
 
-Website tiếng Việt để ghi nhận đời sống, theo dõi thói quen và xem báo cáo tuần. HTML/CSS/JavaScript thuần, không cần build. Supabase cung cấp email/password login và database riêng theo từng tài khoản.
+Nhánh chuyển đổi độc lập `migration/vibe-postgres`: frontend tiếng Việt và backend Node.js/Express/PostgreSQL. Không gọi Supabase, không chứa database password trong frontend. Website chính trên `main` chưa đổi.
 
-## Bắt đầu
+**Đọc [hướng dẫn chuyển đổi](VIBE_MIGRATION.md)** trước khi triển khai hoặc xóa dữ liệu cũ. Bản này cần Node.js/Docker, không chạy chỉ bằng GitHub Pages hay Python static server.
 
-Xem **[Hướng dẫn kết nối Supabase từng bước](SUPABASE_SETUP.md)**. Tạo project, chạy `supabase/schema.sql`, cấu hình URL xác nhận email và điền Project URL + Publishable key công khai vào `config.js`. Không bao giờ đưa service_role/Secret key hoặc mật khẩu database lên frontend.
+## Chạy
 
-Chạy từ thư mục dự án:
-
-```sh
-python3 -m http.server 8000 --bind 0.0.0.0
-```
-
-Hoặc triển khai các tệp tĩnh trên GitHub Pages. Đăng nhập và xác nhận email cần HTTP/HTTPS cùng Redirect URL đúng; không dùng mở file trực tiếp cho quy trình cloud. Khi chưa cấu hình Supabase, trang hướng dẫn kết nối và chế độ xem thử xuất hiện. Xem thử chỉ giữ dữ liệu trong bộ nhớ, không lưu.
-
-## Tính năng
-
-- Tổng quan, điểm cân bằng, điều chỉnh nước nhanh, checklist và biểu đồ 7 ngày.
-- Ghi nhận ngủ, nước, vận động, dinh dưỡng, tâm trạng, năng lượng và nhật ký.
-- Tạo/lọc/xóa thói quen, lịch hoàn thành, chuỗi hiện tại và kỷ lục.
-- Báo cáo 7 ngày, radar, mức độ đều đặn, huy hiệu, mục tiêu đề xuất và in/PDF.
-- Trợ lý quy tắc ngoại tuyến; tùy chọn Gemini 2.5 Flash với API key cá nhân giữ trong phiên tab.
-- Đăng ký, xác nhận email, đăng nhập, quên mật khẩu và đăng xuất.
-- Lưu cloud theo tài khoản, phát hiện ghi đè giữa thiết bị, thông báo chưa lưu khi lỗi; xuất/nhập JSON và chuyển dữ liệu LocalStorage cũ có xác nhận.
-- Giao diện sáng/tối và responsive. Google Fonts tùy chọn, có phông hệ thống dự phòng.
-
-## Dữ liệu
-
-Ghi nhận và thói quen lưu trong bảng `public.lifemate_data` trên Supabase; mỗi tài khoản có một JSON document với revision. RLS chỉ cho đọc hàng của mình; ghi qua RPC lấy `auth.uid()` và so khớp revision. Không tự động trộn dữ liệu hay realtime: tải lại từ đám mây trong Cài đặt khi chuyển thiết bị. Nếu xung đột, xuất bản nháp trước khi tải lại.
-
-Dữ liệu cá nhân mới không ghi vào LocalStorage. Phiên đăng nhập nằm ở SessionStorage của tab; có thể cần đăng nhập lại sau khi đóng tab. LocalStorage còn dùng cho lựa chọn giao diện và đọc dữ liệu phiên bản cũ để di chuyển. Không tự gửi dữ liệu cũ/mẫu lên cloud. Khi lỗi mạng, bản nháp chỉ còn trong bộ nhớ tab cho đến khi lưu lại hoặc xuất JSON. Chủ project Supabase có quyền quản trị dữ liệu; chưa có mã hóa đầu cuối.
-
-Gemini nhận hội thoại gần đây và số liệu/nhật ký 7 ngày khi người dùng chủ động bật bằng khóa riêng. Khóa không nằm trong JSON sao lưu. Dùng khóa cá nhân có giới hạn; website nhiều người dùng với khóa chung cần backend bảo vệ khóa.
-
-## Điểm và giới hạn
-
-Điểm là trung bình năm thành phần: ngủ/8h, nước/2L, vận động/30 phút, tâm trạng và dinh dưỡng; mỗi thành phần tối đa 100. Chỉ là chỉ số tham khảo, không phải thước đo y tế. Calo ước tính 5 kcal/phút. Quan sát tương quan không chứng minh quan hệ nguyên nhân. Trợ lý không thay thế chẩn đoán/điều trị chuyên môn.
-
-## Kiểm tra
+Node.js 22 hoặc 24 và PostgreSQL 16:
 
 ```sh
-node --check app.js
-node --check cloud.js
-node --check account.js
-node --test tests/cloud.test.cjs
+npm ci
 ```
 
-Kiểm thử đăng nhập, dữ liệu hai tài khoản và hai thiết bị thật theo mục 5 trong hướng dẫn Supabase sau khi kết nối project. Không coi mock API là xác minh kết nối Supabase thật.
+Đặt `DATABASE_URL` (hoặc `POSTGRES_URL`), `APP_ORIGIN`, `NODE_ENV`, `PORT` trong môi trường server. Xem `.env.example` (server không tự nạp tệp .env; host cần inject biến). Chạy:
+
+```sh
+npm start
+```
+
+Database tự tạo các bảng riêng `lm_users`, `lm_sessions`, `lm_data`, `lm_auth_limits`. Không dùng schema auth của Supabase. Health check `/api/health`.
+
+## Tài khoản và dữ liệu
+
+Đăng ký email/mật khẩu (email làm tên đăng nhập, chưa xác minh qua email). Lưu mã khôi phục một lần; mã dùng thay cho email khi quên mật khẩu. Có thể tạo mã mới trong Cài đặt với mật khẩu hiện tại. Cookie phiên HttpOnly/Secure tối đa 7 ngày; mật khẩu băm scrypt. Nhật ký/thói quen chỉ lưu trong database và bộ nhớ tab, không lưu mới vào LocalStorage. LocalStorage chỉ giữ lựa chọn theme và đọc bản cũ để chuyển có xác nhận.
+
+Mỗi tài khoản cũ cần tạo tài khoản mới rồi nhập JSON đã xuất từ website cũ. Chưa có nhập hàng loạt Supabase Auth, chưa giữ user IDs hoặc xác minh email cũ. Không xóa Supabase trước khi chuyển xong dữ liệu và thử khôi phục backup.
+
+## Chức năng
+
+Tổng quan, ghi nhận hằng ngày, thói quen, điểm cân bằng, báo cáo 7 ngày/in PDF, sáng/tối, nhập/xuất JSON. Trợ lý quy tắc ngoại tuyến; Gemini tùy chọn vẫn dùng khóa cá nhân trong phiên tab và gửi hội thoại/nhật ký 7 ngày đến Google khi bật.
+
+Điểm cân bằng và calo là ước tính tham khảo, không phải thước đo y tế; trợ lý không thay thế chuyên gia. Chủ database có quyền quản trị, chưa có mã hóa đầu cuối. Thay đổi lỗi mạng chỉ nằm trong bộ nhớ tab cho đến khi lưu lại hoặc xuất JSON.
+
+## Kiểm thử
+
+```sh
+npm test
+```
+
+Xem `VIBE_MIGRATION.md` để kiểm tra migration, backup/restore và những giới hạn triển khai.

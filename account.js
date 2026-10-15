@@ -9,25 +9,24 @@ function updateAccountUI(){
   status.classList.toggle('unsaved',account.dirty);
   $('#account-button').textContent=account.user?'Tài khoản':'Đăng nhập';
   $('.profile strong').textContent=account.user?.email||'Bạn của LifeMate';
-  $('.profile small').textContent=account.user?'Supabase Cloud':'Chưa kết nối tài khoản';
+  $('.profile small').textContent=account.user?cloud.label:'Chưa kết nối tài khoản';
 }
 function renderAccountGate(){
   let html='';
   if(account.loading)html='<h1>Đang mở không gian của bạn…</h1><p class="muted">Kết nối dữ liệu trên đám mây.</p>';
-  else if(!cloud.configured&&!account.demo)html=`<span class="coach-label">LIFEMATE CLOUD</span><h1>Dữ liệu của bạn, trên mọi thiết bị.</h1><p>Website đã có chức năng đăng nhập và lưu đám mây. Chủ website cần kết nối project Supabase một lần để bắt đầu.</p><p class="muted">Xem <a href="https://github.com/luongbaoduyen26-ops/LifeMate/blob/main/SUPABASE_SETUP.md">hướng dẫn kết nối Supabase</a>. Chỉ cần Project URL và Publishable key công khai.</p><button id="view-demo" class="primary">Xem thử bằng dữ liệu mẫu</button><p class="notice">Chế độ xem thử không lưu dữ liệu cá nhân. ${legacy?'Dữ liệu cũ trên trình duyệt vẫn được giữ nguyên, chưa gửi lên đám mây.':''}</p>`;
+  else if(cloud.recoveryCode)html=`<h1>Lưu mã khôi phục tài khoản</h1><p>Mã này giúp đặt lại mật khẩu khi bạn quên. Chúng tôi không gửi email khôi phục. Mã chỉ hiển thị lần này; hãy lưu riêng trong trình quản lý mật khẩu.</p><pre class="recovery-code">${esc(cloud.recoveryCode)}</pre><p class="notice">Không gửi mã cho người khác hoặc đưa lên GitHub. Nếu mất cả mật khẩu và mã, bạn không thể tự khôi phục tài khoản.</p><button class="primary" id="saved-recovery-code">Tôi đã lưu mã ở nơi an toàn</button><button id="signout">Đăng xuất</button>`;
   else if(account.loadError)html=`<h1>Chưa tải được dữ liệu</h1><p role="alert">${esc(account.loadError)}</p><button id="reload-cloud" class="primary">Thử tải lại</button><button id="signout">Đăng xuất</button>`;
-  else if(account.recovery)html=`<h1>Đặt mật khẩu mới</h1><form id="password-form"><label>Mật khẩu mới<input type="password" name="password" required minlength="8" maxlength="128" autocomplete="new-password"></label><button class="primary" ${account.authBusy?'disabled':''}>Lưu mật khẩu mới</button></form><p role="status">${esc(account.message)}</p><button id="signout">Hủy và đăng xuất</button>`;
   else if(cloud.configured&&!account.user)html=authScreen();
   if(!html)return false;
   $('#nav').innerHTML='';$('#content').innerHTML=`<section class="card auth-card">${html}</section>`;document.title='Tài khoản · LifeMate';return true;
 }
-function authScreen(){const signup=account.mode==='signup',recover=account.mode==='recover';return `<span class="coach-label">KHÔNG GIAN RIÊNG CỦA BẠN</span><h1>${recover?'Quên mật khẩu?':signup?'Bắt đầu cùng LifeMate':'Chào bạn trở lại 🌿'}</h1><p class="muted">${recover?'Nhập email để nhận liên kết đặt mật khẩu mới.':'Đăng nhập để lưu ghi nhận và thói quen trên đám mây, dùng tiếp ở điện thoại hoặc máy tính.'}</p><form id="auth-form"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>${recover?'':`<label>Mật khẩu<input name="password" type="password" required minlength="${signup?8:1}" maxlength="128" autocomplete="${signup?'new-password':'current-password'}"></label>`}<button class="primary" ${account.authBusy?'disabled':''}>${account.authBusy?'Đang xử lý…':recover?'Gửi email khôi phục':signup?'Tạo tài khoản':'Đăng nhập'}</button></form><p role="status" class="auth-message">${esc(account.message)}</p><div class="auth-switch">${account.mode!=='signin'?'<button data-auth-mode="signin">Đã có tài khoản? Đăng nhập</button>':''}${account.mode!=='signup'?'<button data-auth-mode="signup">Tạo tài khoản mới</button>':''}${account.mode!=='recover'?'<button data-auth-mode="recover">Quên mật khẩu</button>':''}</div><p class="notice">${legacy?'Dữ liệu cũ chưa được gửi đi. Sau khi đăng nhập, bạn có thể chuyển dữ liệu trong Cài đặt.':'Nhật ký và thói quen thuộc tài khoản của bạn.'}</p>`}
+function authScreen(){const signup=account.mode==='signup',recover=account.mode==='recover';return `<span class="coach-label">KHÔNG GIAN RIÊNG CỦA BẠN</span><h1>${recover?'Khôi phục tài khoản':signup?'Bắt đầu cùng LifeMate':'Chào bạn trở lại 🌿'}</h1><p class="muted">${recover?'Nhập mã khôi phục đã lưu khi tạo tài khoản và chọn mật khẩu mới. Không có email được gửi.':signup?'Dùng email làm tên đăng nhập (chưa xác minh qua email). Sau khi tạo tài khoản, hãy lưu mã khôi phục ở nơi an toàn.':'Đăng nhập để lưu ghi nhận và thói quen, dùng tiếp ở điện thoại hoặc máy tính.'}</p><form id="auth-form"><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>${recover?'<label>Mã khôi phục<input name="recoveryCode" required autocomplete="off" spellcheck="false"></label>':''}<label>${recover?'Mật khẩu mới':'Mật khẩu'}<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="${signup||recover?'new-password':'current-password'}"></label><button class="primary" ${account.authBusy?'disabled':''}>${account.authBusy?'Đang xử lý…':recover?'Đặt lại mật khẩu':signup?'Tạo tài khoản':'Đăng nhập'}</button></form><p role="status" class="auth-message">${esc(account.message)}</p><div class="auth-switch">${account.mode!=='signin'?'<button data-auth-mode="signin">Đã có tài khoản? Đăng nhập</button>':''}${account.mode!=='signup'?'<button data-auth-mode="signup">Tạo tài khoản mới</button>':''}${account.mode!=='recover'?'<button data-auth-mode="recover">Quên mật khẩu</button>':''}</div><p class="notice">Tài khoản từ website cũ không tự chuyển. Tạo tài khoản mới và vào Cài đặt → Khôi phục JSON để nhập bản sao dữ liệu đã xuất.</p>`}
 function syncBanner(){
   if(account.demo)return '<div class="sync-banner">Đang xem thử · Thay đổi chỉ ở trong tab, không lưu trên thiết bị hay đám mây. <button id="exit-demo">Về trang kết nối</button></div>';
   if(!account.dirty)return '';
   return `<div class="sync-banner" role="alert"><div><strong>${account.saving?'Đang lưu lên đám mây…':'Thay đổi chưa được lưu'}</strong><p>${esc(account.syncError||'Đừng đóng tab cho đến khi lưu hoàn tất.')}</p></div>${account.saving?'':'<button id="retry-save">Thử lưu lại</button><button id="export">Xuất JSON giữ bản nháp</button><button id="reload-cloud">Tải lại từ đám mây</button>'}</div>`;
 }
-function accountSettings(){return `<section class="card account-card"><div class="section-title"><h2>☁ Tài khoản & dữ liệu đám mây</h2>${account.user?'<button id="signout">Đăng xuất</button>':''}</div><p>${account.user?esc(account.user.email):'Đang xem thử, chưa đăng nhập.'}</p><p class="muted">Ghi nhận và thói quen được lưu trên Supabase khi đăng nhập. Không lưu bản sao dữ liệu sức khỏe vào LocalStorage. Phiên đăng nhập chỉ giữ trong tab; sau khi đóng tab bạn có thể cần đăng nhập lại.</p>${account.user?'<button id="reload-cloud">↻ Tải lại từ đám mây</button>':''}${legacy?`<div class="legacy-box"><h3>Dữ liệu cũ trên trình duyệt</h3><p class="muted">Có ${Object.keys(legacy.records).length} ngày và ${legacy.habits.length} thói quen${legacy.demo?' (có dữ liệu mẫu)':''}. Dữ liệu cũ chưa tự động gửi lên tài khoản.</p><button id="export-legacy">Xuất JSON dữ liệu cũ</button>${account.user?'<button id="migrate-legacy">Chuyển dữ liệu cũ lên tài khoản</button>':''}<button id="remove-legacy" class="danger">Xóa bản cũ trên thiết bị</button></div>`:''}</section>`}
+function accountSettings(){return `<section class="card account-card"><div class="section-title"><h2>☁ Tài khoản & dữ liệu đám mây</h2>${account.user?'<button id="signout">Đăng xuất</button>':''}</div><p>${account.user?esc(account.user.email):'Đang xem thử, chưa đăng nhập.'}</p><p class="muted">Ghi nhận và thói quen được lưu trong PostgreSQL của website. Không lưu dữ liệu sức khỏe vào LocalStorage. Phiên đăng nhập dùng cookie bảo mật, tối đa 7 ngày. Đăng xuất khi dùng máy chung.</p>${account.user?'<button id="reload-cloud">↻ Tải lại từ đám mây</button><form id="recovery-code-form"><label>Tạo mã khôi phục mới (mã cũ sẽ hết hiệu lực)<input type="password" name="password" autocomplete="current-password" required placeholder="Mật khẩu hiện tại"></label><button>Tạo mã mới</button></form>':''}${legacy?`<div class="legacy-box"><h3>Dữ liệu cũ trên trình duyệt</h3><p class="muted">Có ${Object.keys(legacy.records).length} ngày và ${legacy.habits.length} thói quen${legacy.demo?' (có dữ liệu mẫu)':''}. Dữ liệu cũ chưa tự động gửi lên tài khoản.</p><button id="export-legacy">Xuất JSON dữ liệu cũ</button>${account.user?'<button id="migrate-legacy">Chuyển dữ liệu cũ lên tài khoản</button>':''}<button id="remove-legacy" class="danger">Xóa bản cũ trên thiết bị</button></div>`:''}</section>`}
 async function saveCloudData(){
   if(account.demo){toast('Chế độ xem thử: thay đổi không được lưu.');return false}
   if(!account.user||account.loading||account.loadError){toast('Vui lòng đăng nhập và tải dữ liệu trước.');return false}
@@ -62,12 +61,13 @@ function exportLegacy(){const a=document.createElement('a'),url=URL.createObject
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.id==='account-button'){if(!account.user&&account.demo){account.demo=false;data=emptyData();render()}else{location.hash='settings';render()}}
+  if(b.id==='saved-recovery-code'){cloud.recoveryCode=null;render()}
   if(b.dataset.authMode){account.mode=b.dataset.authMode;account.message='';render()}
   if(b.id==='view-demo'){account.demo=true;data=seed();render()}
   if(b.id==='exit-demo'){account.demo=false;data=emptyData();render()}
   if(b.id==='retry-save'&&!account.saving){if(await saveCloudData())toast('Đã lưu lên đám mây');render()}
   if(b.id==='reload-cloud'&&!account.saving){if(account.dirty&&!confirm('Bỏ thay đổi chưa lưu và tải bản trên đám mây? Hãy xuất JSON trước nếu muốn giữ bản nháp.'))return;await loadCloudData()}
-  if(b.id==='signout'&&!account.saving){if(account.dirty&&!confirm('Thay đổi chưa lưu sẽ mất khi đăng xuất. Bạn đã xuất JSON và muốn tiếp tục?'))return;account.loading=true;render();let error;try{await cloud.signOut()}catch(e){error=e}finally{clearPrivateState();account.loading=false;account.message=error?'Đã xóa phiên trên thiết bị này. Không liên lạc được máy chủ để kết thúc phiên từ xa.':'Đã đăng xuất.';render()}}
+  if(b.id==='signout'&&!account.saving){if(account.dirty&&!confirm('Thay đổi chưa lưu sẽ mất khi đăng xuất. Bạn đã xuất JSON và muốn tiếp tục?'))return;account.loading=true;render();try{await cloud.signOut();clearPrivateState();account.message='Đã đăng xuất.'}catch(error){toast('Chưa đăng xuất được: '+error.message)}finally{account.loading=false;render()}}
   if(b.id==='export-legacy'&&legacy)exportLegacy();
   if(b.id==='migrate-legacy'&&legacy&&account.user){
     if(!confirm('Chuyển dữ liệu cũ lên tài khoản này? Dữ liệu tài khoản hiện có sẽ được thay thế. Hãy xuất JSON trước nếu cần giữ cả hai.'))return;
@@ -78,18 +78,16 @@ document.addEventListener('click',async e=>{
   }
 });
 document.addEventListener('submit',async e=>{
-  const form=e.target;if(!['auth-form','password-form'].includes(form.id))return;
+  const form=e.target;if(!['auth-form','recovery-code-form'].includes(form.id))return;
   e.preventDefault();if(account.authBusy)return;
   const values=Object.fromEntries(new FormData(form));account.authBusy=true;account.message='';render();
   try{
-    if(form.id==='password-form'){
-      await cloud.changePassword(values.password);account.recovery=false;page='dashboard';account.message='';toast('Đã đổi mật khẩu.');await loadCloudData();
-    }else if(account.mode==='recover'){
-      await cloud.recover(values.email.trim());account.message='Nếu email đã đăng ký, bạn sẽ nhận được liên kết đặt mật khẩu. Kiểm tra cả mục thư rác.';
+    if(form.id==='recovery-code-form'){await cloud.rotateRecovery(values.password)}else if(account.mode==='recover'){
+      const result=await cloud.recover(values.email.trim(),values.recoveryCode.trim(),values.password);account.user=result.user;page='dashboard';await loadCloudData();
     }else if(account.mode==='signup'){
       const result=await cloud.signUp(values.email.trim(),values.password);
-      if(result.access_token){account.user=result.user;page='dashboard';await loadCloudData()}
-      else{account.mode='signin';account.message='Hãy mở email để xác nhận tài khoản, rồi quay lại đăng nhập. Nếu email đã tồn tại, hãy đăng nhập hoặc dùng Quên mật khẩu.'}
+      if(result.user){account.user=result.user;page='dashboard';await loadCloudData()}
+      else{throw Error('Chưa tạo được tài khoản. Hãy thử lại.')}
     }else{
       account.user=await cloud.signIn(values.email.trim(),values.password);page='dashboard';history.replaceState(null,'',location.pathname+location.search+'#dashboard');await loadCloudData();
     }
