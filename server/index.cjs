@@ -9,9 +9,9 @@ async function main(){
   const parsed=new URL(connectionString);
   if(!['postgres:','postgresql:'].includes(parsed.protocol)||!parsed.hostname||parsed.port==='0')throw Error('DATABASE_URL must use the private PostgreSQL hostname and its valid port (usually 5432), not an empty external host or port 0.');
   // Prevent connection string options from silently disabling TLS verification.
-  for(const option of ['sslmode','sslcert','sslkey','sslrootcert'])if(parsed.searchParams.has(option))throw Error('Remove SSL query options from DATABASE_URL; use DATABASE_SSL and DATABASE_CA_FILE.');
+  for(const option of ['sslmode','sslcert','sslkey','sslrootcert'])if(parsed.searchParams.has(option))throw Error('Remove SSL query options from DATABASE_URL; use DATABASE_SSL and the Node.js trusted certificate store.');
   const production=process.env.NODE_ENV!=='development';
-  const ssl=process.env.DATABASE_SSL==='true'?{rejectUnauthorized:true,...(process.env.DATABASE_CA_FILE?{ca:fs.readFileSync(process.env.DATABASE_CA_FILE,'utf8')}: {})}:false;
+  const ssl=process.env.DATABASE_SSL==='true'?{rejectUnauthorized:true}:false;
   const pool=new Pool({connectionString,ssl,max:5,connectionTimeoutMillis:10000,statement_timeout:15000});
   pool.on('error',error=>console.error('Database connection error:',error.code||error.name));
   await pool.query(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'));

@@ -32,9 +32,8 @@ Thiết lập biến môi trường ở khu vực bảo mật của host:
 | `NODE_ENV` | `production` |
 | `PORT` | Theo yêu cầu host, mặc định ứng dụng là `3000` |
 | `DATABASE_SSL` | `true` nếu endpoint PostgreSQL hỗ trợ TLS; dùng CA được tin cậy. Với mạng database nội bộ, theo hướng dẫn của host; không tắt xác minh chứng chỉ để xử lý lỗi TLS |
-| `DATABASE_CA_FILE` | Đường dẫn CA tin cậy nếu provider yêu cầu; không cần khi dùng CA hệ thống |
 
-Chuỗi nội bộ phải có host database và cổng hợp lệ (thường là 5432), không dùng chuỗi host ngoài trống/cổng 0 như có thể thấy ở trang thông tin kết nối. Không đặt chuỗi kết nối trong `config.js`. Nếu URL có tham số SSL, dùng cấu hình `DATABASE_SSL`/`DATABASE_CA_FILE` tương ứng và bỏ các tham số SSL khỏi URL để tránh ghi đè xác minh. Bản server từ chối `sslmode/sslcert/sslkey/sslrootcert` trong URL.
+Chuỗi nội bộ phải có host database và cổng hợp lệ (thường là 5432), không dùng chuỗi host ngoài trống/cổng 0 như có thể thấy ở trang thông tin kết nối. Không đặt chuỗi kết nối trong `config.js`. Nếu URL có tham số SSL, dùng cấu hình `DATABASE_SSL` tương ứng và kho chứng chỉ tin cậy của Node.js và bỏ các tham số SSL khỏi URL để tránh ghi đè xác minh. Bản server từ chối `sslmode/sslcert/sslkey/sslrootcert` trong URL.
 
 Lệnh cài: `npm ci --omit=dev`; lệnh chạy: `npm start`. Nếu host dùng Docker, Dockerfile đã thực hiện các bước này. Không chạy Python static server cho bản này.
 
@@ -70,3 +69,5 @@ Bộ kiểm thử dùng PostgreSQL WASM (PGlite), gọi HTTP thật tới Expres
 Chạy local với PostgreSQL riêng: đặt `DATABASE_URL`, `APP_ORIGIN=http://127.0.0.1:3000`, `NODE_ENV=development`; chạy `npm start`. Không dùng chế độ development trên host công khai vì cookie không có Secure ở chế độ này.
 
 Giới hạn: giới hạn đăng nhập theo IP dùng địa chỉ socket thực, không tin X-Forwarded-For; nếu host đặt reverse proxy, nhiều người có thể chung hạn mức. Cần cấu hình tin cậy proxy cụ thể trước khi mở rộng. Email là tên đăng nhập chưa xác minh; chưa có SMTP, MFA hoặc quản trị tài khoản. Mã khôi phục phải giữ ngoài bản sao JSON dữ liệu. Những giới hạn này cần được chủ website chấp nhận trước khi chuyển người dùng thật.
+
+Backend không yêu cầu đường dẫn chứng chỉ CA tùy chỉnh. Khi bật TLS, luôn xác minh bằng kho chứng chỉ tin cậy của Node.js. Nếu provider dùng CA riêng, cấu hình CA tin cậy theo hướng dẫn Node.js/provider; không đặt giá trị giả hoặc tắt xác minh.
